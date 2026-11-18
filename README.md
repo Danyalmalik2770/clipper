@@ -66,6 +66,25 @@
 - **Clip Library**: vertical full-bleed clip cards with thumbnails and scores — search, and sort by score or most recent.
 - **100% local, zero backend**: Electron + bundled FFmpeg + auto-fetched `yt-dlp` + a local SQLite database (`~/ClipperData/clipper.db`).
 
+## Optional: Smarter Picks with Your Own API Key
+
+Clipper works **100% free out of the box** — the built-in local scorer needs no key, no account and no internet. If you want smarter moment-picking, titles and reasons (especially for full videos), you can plug in your own AI provider in **Settings → AI Provider**:
+
+| Provider | What you need | Cost |
+|---|---|---|
+| Built-in local scorer (default) | Nothing | Free forever |
+| Google Gemini | API key | Free tier available |
+| OpenAI | API key | Paid |
+| Anthropic (Claude) | API key | Paid |
+| Ollama | Ollama running on your PC | Free |
+
+**Get the free Gemini key (2 minutes):**
+1. Open [Google AI Studio](https://aistudio.google.com) and sign in with your Google account.
+2. Click **Get API key → Create API key** and copy the key.
+3. In Clipper: **Settings → AI Provider → Google Gemini** → paste the key → keep the model `gemini-2.5-flash` → **Test Connection**.
+
+Your key is stored only in Clipper's local settings on your own PC and is sent only to the provider you chose — never anywhere else.
+
 ## Architecture
 ```mermaid
 flowchart LR
