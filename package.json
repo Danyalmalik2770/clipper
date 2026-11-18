@@ -1,0 +1,84 @@
+{
+  "name": "clipper",
+  "version": "1.0.0",
+  "description": "Local-first open-source YouTube live & VOD viral clip studio. Zero backend - runs 100% on your PC.",
+  "main": "dist-electron/main.js",
+  "license": "MIT",
+  "scripts": {
+    "dev:next": "next dev -p 3000",
+    "dev:electron": "tsc -p tsconfig.electron.json && cross-env CLIPPER_DEV=1 electron .",
+    "dev": "concurrently -k \"npm:dev:next\" \"wait-on http://localhost:3000 && npm:dev:electron\"",
+    "build:next": "next build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "build": "npm run build:next && npm run build:electron && electron-builder",
+    "test": "tsx --test electron/tests/*.test.ts",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.4.0",
+    "@mediapipe/tasks-vision": "^0.10.21",
+    "better-sqlite3": "^11.8.1",
+    "clsx": "^2.1.1",
+    "ffmpeg-static": "^5.2.0",
+    "ffprobe-static": "^3.1.0",
+    "framer-motion": "^12.0.0",
+    "lucide-react": "^0.475.0",
+    "next": "15.1.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.0.1",
+    "youtubei.js": "^13.2.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.13.1",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "wait-on": "^8.0.2"
+  },
+  "build": {
+    "appId": "org.clipper.studio",
+    "productName": "Clipper",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "out/**/*",
+      "dist-electron/**/*",
+      "templates/**/*",
+      "build/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "templates",
+        "to": "templates"
+      },
+      {
+        "from": "build",
+        "to": "build"
+      }
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.png"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "icon": "build/icon.png"
+    }
+  }
+}

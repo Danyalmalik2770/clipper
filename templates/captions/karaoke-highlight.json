@@ -1,0 +1,16 @@
+{
+  "id": "karaoke-highlight",
+  "name": "Karaoke Highlight",
+  "description": "Smooth cyan word-by-word karaoke sweep",
+  "fontFamily": "Poppins",
+  "fontSize": 74,
+  "primaryColor": "#E2E8F0",
+  "highlightColor": "#22D3EE",
+  "strokeColor": "#0F172A",
+  "strokeWidth": 5,
+  "shadowColor": "#000000",
+  "shadowDepth": 2,
+  "animation": "karaoke",
+  "uppercase": false,
+  "wordsPerLine": 4
+}

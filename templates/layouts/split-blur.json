@@ -1,0 +1,6 @@
+{
+  "id": "split-blur",
+  "name": "Split Blur Backdrop",
+  "mode": "split",
+  "blurBackground": true
+}

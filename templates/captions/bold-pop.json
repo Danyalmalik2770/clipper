@@ -1,0 +1,16 @@
+{
+  "id": "bold-pop",
+  "name": "Bold Pop",
+  "description": "High-impact yellow active word pop",
+  "fontFamily": "Montserrat",
+  "fontSize": 82,
+  "primaryColor": "#FFFFFF",
+  "highlightColor": "#FACC15",
+  "strokeColor": "#000000",
+  "strokeWidth": 7,
+  "shadowColor": "#000000",
+  "shadowDepth": 3,
+  "animation": "pop",
+  "uppercase": true,
+  "wordsPerLine": 3
+}

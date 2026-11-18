@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 98%;
+  --foreground: 240 10% 6%;
+  --card: 0 0% 100%;
+  --muted: 240 5% 92%;
+  --border: 240 6% 88%;
+  --accent: 262 83% 58%;
+}
+
+.dark {
+  --background: 240 10% 4%;
+  --foreground: 0 0% 96%;
+  --card: 240 8% 8%;
+  --muted: 240 6% 14%;
+  --border: 240 6% 18%;
+  --accent: 263 85% 65%;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings: "rlig" 1, "calt" 1;
+}

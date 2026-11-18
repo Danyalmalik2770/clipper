@@ -1,0 +1,16 @@
+{
+  "id": "minimal-clean",
+  "name": "Minimal Clean",
+  "description": "Crisp editorial look for podcasts and commentary",
+  "fontFamily": "Inter",
+  "fontSize": 66,
+  "primaryColor": "#D4D4D8",
+  "highlightColor": "#FFFFFF",
+  "strokeColor": "#09090B",
+  "strokeWidth": 3,
+  "shadowColor": "#000000",
+  "shadowDepth": 2,
+  "animation": "clean",
+  "uppercase": false,
+  "wordsPerLine": 4
+}

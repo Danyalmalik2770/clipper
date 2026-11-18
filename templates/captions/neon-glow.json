@@ -1,0 +1,16 @@
+{
+  "id": "neon-glow",
+  "name": "Neon Glow",
+  "description": "Electric magenta highlight with dark outline",
+  "fontFamily": "Orbitron",
+  "fontSize": 76,
+  "primaryColor": "#FFFFFF",
+  "highlightColor": "#F43F5E",
+  "strokeColor": "#1E1B4B",
+  "strokeWidth": 6,
+  "shadowColor": "#EC4899",
+  "shadowDepth": 5,
+  "animation": "glow",
+  "uppercase": true,
+  "wordsPerLine": 3
+}

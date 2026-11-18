@@ -1,0 +1,16 @@
+{
+  "id": "typewriter",
+  "name": "Typewriter",
+  "description": "Monospace terminal pulse highlight",
+  "fontFamily": "JetBrains Mono",
+  "fontSize": 64,
+  "primaryColor": "#A1A1AA",
+  "highlightColor": "#4ADE80",
+  "strokeColor": "#000000",
+  "strokeWidth": 4,
+  "shadowColor": "#000000",
+  "shadowDepth": 2,
+  "animation": "typewriter",
+  "uppercase": false,
+  "wordsPerLine": 3
+}

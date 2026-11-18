@@ -1,0 +1,16 @@
+{
+  "id": "comic",
+  "name": "Comic",
+  "description": "Playful punchy comic bounce style",
+  "fontFamily": "Bangers",
+  "fontSize": 88,
+  "primaryColor": "#FEF08A",
+  "highlightColor": "#FB923C",
+  "strokeColor": "#000000",
+  "strokeWidth": 8,
+  "shadowColor": "#000000",
+  "shadowDepth": 4,
+  "animation": "bounce",
+  "uppercase": true,
+  "wordsPerLine": 2
+}

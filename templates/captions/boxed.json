@@ -1,0 +1,17 @@
+{
+  "id": "boxed",
+  "name": "Boxed",
+  "description": "High-contrast pill box behind captions",
+  "fontFamily": "Rubik",
+  "fontSize": 70,
+  "primaryColor": "#FFFFFF",
+  "highlightColor": "#38BDF8",
+  "strokeColor": "#09090B",
+  "strokeWidth": 3,
+  "shadowColor": "#000000",
+  "shadowDepth": 0,
+  "backgroundColor": "#111827",
+  "animation": "box",
+  "uppercase": false,
+  "wordsPerLine": 3
+}

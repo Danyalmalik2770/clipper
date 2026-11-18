@@ -1,0 +1,16 @@
+{
+  "id": "gradient",
+  "name": "Gradient",
+  "description": "Vibrant sunset accent for viral reactions",
+  "fontFamily": "Syne",
+  "fontSize": 78,
+  "primaryColor": "#FDF4FF",
+  "highlightColor": "#C084FC",
+  "strokeColor": "#18181B",
+  "strokeWidth": 6,
+  "shadowColor": "#581C87",
+  "shadowDepth": 4,
+  "animation": "gradient",
+  "uppercase": true,
+  "wordsPerLine": 3
+}

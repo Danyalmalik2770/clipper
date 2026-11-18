@@ -1,0 +1,29 @@
+<svg viewBox="0 0 1200 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="320" rx="24" fill="#09090B" />
+  <rect x="1" y="1" width="1198" height="318" rx="23" stroke="#27272A" stroke-width="2" />
+  <radialGradient id="glow" cx="50%" cy="40%" r="55%">
+    <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.22" />
+    <stop offset="100%" stop-color="#09090B" stop-opacity="0" />
+  </radialGradient>
+  <rect width="1200" height="320" rx="24" fill="url(#glow)" />
+  <g transform="translate(365, 76)">
+    <g transform="translate(0, 22)" stroke="#FAFAFA">
+      <circle cx="15" cy="19" r="6.5" stroke-width="4.8" />
+      <circle cx="15" cy="45" r="6.5" stroke-width="4.8" />
+      <path d="M20.5 23L40 43M20.5 41L40 21" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M44.5 25L55.5 32L44.5 39Z" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <g transform="translate(76, 3)">
+      <path d="M53.6 34.4A22 22 0 1 0 38 72L74 72L74 12" stroke="#FAFAFA" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M100 30L100 72" stroke="#FAFAFA" stroke-width="9.5" stroke-linecap="round" />
+      <circle cx="100" cy="14" r="5" fill="#FAFAFA" />
+      <path d="M128 94L128 50A22 22 0 1 1 172 50A22 22 0 1 1 128 50" stroke="#FAFAFA" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M198 94L198 50A22 22 0 1 1 242 50A22 22 0 1 1 198 50" stroke="#FAFAFA" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M268 50L312 50A22 22 0 1 0 306.8 64.1" stroke="#FAFAFA" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M338 72L338 50A22 22 0 0 1 360 28L374 28" stroke="#FAFAFA" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g>
+  <text x="600" y="232" text-anchor="middle" fill="#A1A1AA" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="500">
+    100% Free, Zero-Backend YouTube Live &amp; VOD Viral Clip Studio
+  </text>
+</svg>

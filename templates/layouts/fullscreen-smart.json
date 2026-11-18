@@ -1,0 +1,6 @@
+{
+  "id": "fullscreen-smart",
+  "name": "Fullscreen Smart Crop",
+  "mode": "fullscreen",
+  "smartCrop": true
+}

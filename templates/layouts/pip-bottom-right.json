@@ -1,0 +1,8 @@
+{
+  "id": "pip-bottom-right",
+  "name": "PIP Bubble Bottom Right",
+  "mode": "pip",
+  "pipPosition": "bottom-right",
+  "pipScale": 0.3,
+  "pipRounded": true
+}
