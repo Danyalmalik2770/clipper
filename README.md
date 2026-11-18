@@ -7,6 +7,14 @@
   Runs completely on your own PC - no cloud server, no Docker, no subscriptions.
 </p>
 
+<p align="center">
+  <a href="https://muse.ai/files/1449552968231931/1401354681799909/vtaxwfsm2hjzaluptdfvrinv/clipper-promo.mp4">
+    <img src="https://muse.ai/files/1449552968231931/2222540668339107/1h23mcc4rzfbzgw0intfhn0x/clipper-promo-poster.png" alt="Watch the Clipper promo video" width="80%" />
+  </a>
+  <br />
+  <strong>&#9654; Watch the promo (34s)</strong>
+</p>
+
 ---
 
 ## Features
