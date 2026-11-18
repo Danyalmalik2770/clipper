@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  Clipper turns YouTube live streams, full videos and your own local files into ready-to-post viral clips — automatically. It watches chat, audio, motion and speech to find the moments everyone will replay, transcribes them locally with word-level Whisper captions, follows the speaker's face with smart 9:16 layouts, and exports polished vertical or horizontal MP4s. Everything runs on your own machine: no cloud, no accounts, no subscriptions.
+  Clipper turns YouTube live streams, full videos and your own local files into ready-to-post viral clips — automatically. It watches chat, audio, motion and speech to find the moments everyone will replay, transcribes them locally with word-level Whisper captions, follows the speaker's face with smart 9:16 layouts, and exports polished vertical or horizontal MP4s.
 </p>
 
 <p align="center">
@@ -56,7 +56,7 @@
 ### Library & Dashboard
 - **Dashboard** for all your streams and downloads, with live status for each.
 - **Clip Library**: vertical full-bleed clip cards with thumbnails and scores — search, and sort by score or most recent.
-- **100% local, zero backend**: Electron + bundled FFmpeg + auto-fetched `yt-dlp` + a local SQLite database (`~/ClipperData/clipper.db`). No cloud server, no Docker, no accounts, no subscriptions — free forever.
+- **100% local, zero backend**: Electron + bundled FFmpeg + auto-fetched `yt-dlp` + a local SQLite database (`~/ClipperData/clipper.db`).
 
 ## Architecture
 ```mermaid
