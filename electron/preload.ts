@@ -36,6 +36,7 @@ const api = {
     get: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),
     save: (settings: AppSettings): Promise<AppSettings> => ipcRenderer.invoke('settings:save', settings),
     pickFolder: (): Promise<string | null> => ipcRenderer.invoke('settings:pick-folder'),
+    pickCookies: (): Promise<string | null> => ipcRenderer.invoke('settings:pick-cookies'),
   },
   onEvent: (cb: (event: ClipperEvent) => void): (() => void) => {
     const listener = (_: unknown, payload: ClipperEvent) => cb(payload);

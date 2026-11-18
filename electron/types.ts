@@ -1,17 +1,24 @@
 export type StreamStatus = 'idle' | 'ingesting' | 'stopped' | 'error';
+export type DownloadState =
+  | 'idle'
+  | 'downloading'
+  | 'throttled-retrying'
+  | 'blocked-waiting'
+  | 'stopped'
+  | 'error';
 export type LayoutMode = 'fullscreen' | 'stacked' | 'pip' | 'split';
 export type LLMProvider = 'none' | 'openai' | 'anthropic' | 'ollama';
 
 export interface RectNormalized {
-  x: number; // 0..1
-  y: number; // 0..1
-  w: number; // 0..1
-  h: number; // 0..1
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 export interface WordToken {
   word: string;
-  start: number; // seconds relative to clip start
+  start: number;
   end: number;
   confidence?: number;
 }
@@ -27,10 +34,14 @@ export interface StreamRecord {
   clipsCount: number;
   createdAt: number;
   errorMessage?: string | null;
+  downloadState?: DownloadState;
+  retryInSec?: number;
+  activeClient?: string;
+  downloadSpeedKbps?: number;
 }
 
 export interface SignalSample {
-  timestamp: number; // stream relative seconds
+  timestamp: number;
   chatScore: number;
   audioScore: number;
   motionScore: number;
@@ -85,9 +96,9 @@ export interface LayoutTemplate {
   id: string;
   name: string;
   mode: LayoutMode;
-  topRatio?: number; // for stacked (e.g., 0.38 = 38% facecam)
+  topRatio?: number;
   pipPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  pipScale?: number; // 0.2..0.45
+  pipScale?: number;
   pipRounded?: boolean;
   smartCrop?: boolean;
   blurBackground?: boolean;
@@ -109,10 +120,22 @@ export interface AppSettings {
   outputFps: 30 | 60;
   outputCrf: number;
   theme: 'dark' | 'light';
+  forceIpv4?: boolean;
+  cookiesPath?: string;
 }
 
 export type ClipperEvent =
-  | { type: 'stream:status'; streamId: string; status: StreamStatus; bufferSeconds: number; error?: string }
+  | {
+      type: 'stream:status';
+      streamId: string;
+      status: StreamStatus;
+      bufferSeconds: number;
+      error?: string;
+      downloadState?: DownloadState;
+      retryInSec?: number;
+      activeClient?: string;
+      downloadSpeedKbps?: number;
+    }
   | { type: 'monitor:signal'; streamId: string; sample: SignalSample }
   | { type: 'clip:detected'; streamId: string; clip: ClipRecord }
   | {

@@ -3,8 +3,8 @@ import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Flame, Scissors } from 'lucide-react';
-import type { ClipRecord, SignalSample } from '../../../electron/types';
+import { AlertTriangle, Flame, Scissors } from 'lucide-react';
+import type { ClipRecord, DownloadState, SignalSample } from '../../../electron/types';
 import { Badge, Button, Card } from '@/components/ui';
 import { formatSeconds, mediaUrl } from '@/lib/clipper-client';
 
@@ -14,15 +14,32 @@ function MonitorInner() {
   const [signals, setSignals] = useState<SignalSample[]>([]);
   const [clips, setClips] = useState<ClipRecord[]>([]);
   const [previewClip, setPreviewClip] = useState<ClipRecord | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [dlState, setDlState] = useState<DownloadState>('downloading');
+  const [retryInSec, setRetryInSec] = useState<number>(0);
+  const [activeClient, setActiveClient] = useState<string>('web');
+  const [speedKbps, setSpeedKbps] = useState<number>(0);
 
   useEffect(() => {
     if (!streamId || !window.clipper) return;
+    window.clipper.streams.list().then((all) => {
+      const current = all.find((s) => s.id === streamId);
+      if (current?.errorMessage) setErrorMsg(current.errorMessage);
+      if (current?.status === 'stopped') setDlState('stopped');
+    });
     window.clipper.clips.list(streamId).then((loaded) => {
       setClips(loaded);
       if (loaded.length > 0) setPreviewClip(loaded[0]);
     });
 
     return window.clipper.onEvent((ev) => {
+      if (ev.type === 'stream:status' && ev.streamId === streamId) {
+        if (ev.downloadState) setDlState(ev.downloadState);
+        if (ev.retryInSec !== undefined) setRetryInSec(ev.retryInSec);
+        if (ev.activeClient) setActiveClient(ev.activeClient);
+        if (ev.downloadSpeedKbps !== undefined) setSpeedKbps(ev.downloadSpeedKbps);
+        setErrorMsg(ev.error ?? null);
+      }
       if (ev.type === 'monitor:signal' && ev.streamId === streamId) {
         setSignals((prev) => [...prev.slice(-89), ev.sample]);
       }
@@ -39,15 +56,50 @@ function MonitorInner() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Live Monitor</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold">Live Monitor</h1>
+            <Badge
+              tone={
+                dlState === 'downloading'
+                  ? 'green'
+                  : dlState === 'throttled-retrying'
+                  ? 'amber'
+                  : dlState === 'blocked-waiting'
+                  ? 'rose'
+                  : 'default'
+              }
+            >
+              {dlState === 'downloading'
+                ? `downloading • ${speedKbps} KB/s • ${activeClient}`
+                : dlState === 'throttled-retrying' || dlState === 'blocked-waiting'
+                ? `${dlState} • retry in ${retryInSec}s (${activeClient})`
+                : dlState}
+            </Badge>
+          </div>
           <p className="text-xs text-foreground/60">Stream ID: {streamId || 'None'}</p>
         </div>
         <Link href="/clips">
           <Button variant="secondary" size="sm">View All Clips</Button>
         </Link>
       </div>
+
+      {errorMsg && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3.5 text-sm text-amber-300">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <div className="font-semibold">
+              {dlState === 'blocked-waiting'
+                ? `YouTube IP Blocked - Waiting ${retryInSec}s`
+                : dlState === 'throttled-retrying'
+                ? `Throttled - Retrying in ${retryInSec}s`
+                : 'Pipeline Notice'}
+            </div>
+            <div className="text-xs opacity-90">{errorMsg}</div>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="space-y-4 p-4 lg:col-span-2">

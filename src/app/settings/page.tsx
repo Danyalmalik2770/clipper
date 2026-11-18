@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { FolderOpen, Save } from 'lucide-react';
-import type { AppSettings, LLMProvider } from '../../../electron/types';
+import { Cookie, FolderOpen, Save, X } from 'lucide-react';
+import type { AppSettings, LLMProvider } from '../../electron/types';
 import { Button, Card, Input, useToast } from '@/components/ui';
 
 export default function SettingsPage() {
@@ -24,7 +24,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Settings</h1>
-          <p className="text-sm text-foreground/60">100% free local defaults. Optional API keys stay on your PC.</p>
+          <p className="text-sm text-foreground/60">100% free local defaults. Optional API keys &amp; cookies stay on your PC.</p>
         </div>
         <Button onClick={save}><Save className="h-4 w-4" /> Save Changes</Button>
       </div>
@@ -59,6 +59,42 @@ export default function SettingsPage() {
               <option value="onnx-community/whisper-base_timestamped">Base (Balanced, Free)</option>
               <option value="onnx-community/whisper-small_timestamped">Small (Highest Accuracy, Free)</option>
             </select>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="space-y-4 p-5">
+        <h2 className="text-sm font-semibold">YouTube Download Resilience &amp; Anti-Throttle</h2>
+        <label className="flex items-center gap-2.5 text-sm">
+          <input
+            type="checkbox"
+            checked={Boolean(settings.forceIpv4)}
+            onChange={(e) => setSettings({ ...settings, forceIpv4: e.target.checked })}
+          />
+          <span>Force IPv4 for downloads (<code className="text-xs text-violet-400">--force-ipv4</code>)</span>
+        </label>
+        <div className="space-y-1.5">
+          <label className="block text-xs text-foreground/60">Optional YouTube cookies.txt (helps bypass IP throttling)</label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="No cookies.txt selected"
+              value={settings.cookiesPath ?? ''}
+              onChange={(e) => setSettings({ ...settings, cookiesPath: e.target.value })}
+            />
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                const file = await window.clipper?.settings.pickCookies();
+                if (file) setSettings({ ...settings, cookiesPath: file });
+              }}
+            >
+              <Cookie className="h-4 w-4" /> Browse
+            </Button>
+            {settings.cookiesPath && (
+              <Button variant="ghost" onClick={() => setSettings({ ...settings, cookiesPath: '' })} title="Clear cookies">
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </Card>

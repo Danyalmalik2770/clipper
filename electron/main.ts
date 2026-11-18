@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain, protocol, shell } from 'electron';
-import { ensureLocalBinaries, type LocalBinaries } from './binaries';
+import { ensureLocalBinaries, getProxyEnv, type LocalBinaries } from './binaries';
 import { LocalDatabase } from './db';
 import { IngestManager } from './engines/ingest';
 import { renderVerticalClip } from './engines/renderer';
@@ -12,10 +12,13 @@ let db: LocalDatabase;
 let binaries: LocalBinaries;
 let ingestManager: IngestManager;
 
+const proxyEnv = getProxyEnv();
+if (proxyEnv) {
+  app.commandLine.appendSwitch('proxy-server', proxyEnv);
+}
+
 function getTemplatesRoot(): string {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'templates');
-  }
+  if (app.isPackaged) return path.join(process.resourcesPath, 'templates');
   return path.join(process.cwd(), 'templates');
 }
 
@@ -71,6 +74,7 @@ app.whenReady().then(async () => {
 
   registerIpcHandlers();
   createWindow();
+  ingestManager.resumeActiveStreams();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -85,9 +89,9 @@ app.on('window-all-closed', () => {
 function registerIpcHandlers() {
   ipcMain.handle('streams:list', () => db.listStreams());
   ipcMain.handle('streams:start', (_, url: string) => ingestManager.startStream(url));
-  ipcMain.handle('streams:stop', (_, id: string) => ingestManager.stopStream(id));
+  ipcMain.handle('streams:stop', (_, id: string) => ingestManager.stopStream(id, true));
   ipcMain.handle('streams:remove', (_, id: string) => {
-    ingestManager.stopStream(id);
+    ingestManager.stopStream(id, false);
     db.deleteStream(id);
   });
 
@@ -188,6 +192,13 @@ function registerIpcHandlers() {
   ipcMain.handle('settings:save', (_, settings: AppSettings) => db.saveSettings(settings));
   ipcMain.handle('settings:pick-folder', async () => {
     const res = await dialog.showOpenDialog({ properties: ['openDirectory'] });
+    return res.canceled ? null : res.filePaths[0];
+  });
+  ipcMain.handle('settings:pick-cookies', async () => {
+    const res = await dialog.showOpenDialog({
+      properties: ['openFile'],
+      filters: [{ name: 'Cookies Text', extensions: ['txt'] }],
+    });
     return res.canceled ? null : res.filePaths[0];
   });
 }
