@@ -3,6 +3,14 @@
 </div>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="License MIT" />
+  <img src="https://img.shields.io/badge/Desktop-Electron-blue" alt="Desktop Electron" />
+  <img src="https://img.shields.io/badge/Framework-Next.js-blueviolet" alt="Framework Next.js" />
+  <img src="https://img.shields.io/badge/Captions-Whisper%20Local-teal" alt="Captions Whisper Local" />
+  <img src="https://img.shields.io/badge/Backend-Zero%20Cloud-orange" alt="Backend Zero Cloud" />
+</p>
+
+<p align="center">
   <strong>100% Free, Zero-Backend Open-Source YouTube Live &amp; VOD Viral Clip Studio</strong><br />
   Runs completely on your own PC - no cloud server, no Docker, no subscriptions.
 </p>
