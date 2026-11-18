@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { app, BrowserWindow, dialog, ipcMain, protocol, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from 'electron';
 import { ensureLocalBinaries, getProxyEnv, type LocalBinaries } from './binaries';
 import { LocalDatabase } from './db';
 import { IngestManager } from './engines/ingest';
@@ -11,6 +11,13 @@ let mainWindow: BrowserWindow | null = null;
 let db: LocalDatabase;
 let binaries: LocalBinaries;
 let ingestManager: IngestManager;
+
+const FREE_GOOGLE_TTF_FAMILIES = [
+  'Alexandria', 'Montserrat', 'Poppins', 'Inter', 'Oswald', 'Quicksand',
+  'Inconsolata', 'Goudy Bookletter 1911', 'Bebas Neue', 'Anton', 'Bangers',
+  'Rubik', 'Space Grotesk', 'Syne', 'JetBrains Mono', 'Fredoka',
+  'DM Sans', 'Plus Jakarta Sans', 'Orbitron',
+];
 
 const proxyEnv = getProxyEnv();
 if (proxyEnv) {
@@ -33,6 +40,29 @@ function loadJsonTemplates<T>(subdir: string): T[] {
 
 function emitEvent(event: ClipperEvent) {
   mainWindow?.webContents.send('clipper:event', event);
+}
+
+async function downloadGoogleTtf(family: string, fontsDir: string): Promise<boolean> {
+  const dest = path.join(fontsDir, `${family}.ttf`);
+  if (fs.existsSync(dest)) return false;
+  for (const query of [`${family.replace(/\s+/g, '+')}:wght@700`, family.replace(/\s+/g, '+')]) {
+    try {
+      const cssResp = await net.fetch(`https://fonts.googleapis.com/css2?family=${query}`, {
+        headers: { 'User-Agent': 'curl/8.0' },
+      });
+      if (!cssResp.ok) continue;
+      const css = await cssResp.text();
+      const match = css.match(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+\.ttf)\)/);
+      if (!match) continue;
+      const ttfResp = await net.fetch(match[1]);
+      if (!ttfResp.ok) continue;
+      await fs.promises.writeFile(dest, Buffer.from(await ttfResp.arrayBuffer()));
+      return true;
+    } catch {
+      // try next weight query
+    }
+  }
+  return false;
 }
 
 function createWindow() {
@@ -71,6 +101,10 @@ app.whenReady().then(async () => {
   db = new LocalDatabase();
   binaries = await ensureLocalBinaries();
   ingestManager = new IngestManager(db, binaries, emitEvent);
+
+  const fontsDir = path.join(db.getSettings().storagePath, 'fonts');
+  fs.mkdirSync(fontsDir, { recursive: true });
+  void downloadGoogleTtf('Montserrat', fontsDir);
 
   registerIpcHandlers();
   createWindow();
@@ -150,9 +184,7 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle('shell:reveal', (_, filePath: string) => {
-    shell.showItemInFolder(filePath);
-  });
+  ipcMain.handle('shell:reveal', (_, filePath: string) => shell.showItemInFolder(filePath));
 
   ipcMain.handle('templates:captions', () => [
     ...loadJsonTemplates<CaptionTemplate>('captions'),
@@ -176,16 +208,33 @@ function registerIpcHandlers() {
 
   ipcMain.handle('fonts:upload', async () => {
     const res = await dialog.showOpenDialog({
-      properties: ['openFile'],
+      properties: ['openFile', 'multiSelections'],
       filters: [{ name: 'Fonts', extensions: ['ttf', 'otf'] }],
     });
-    if (res.canceled || res.filePaths.length === 0) return null;
-    const src = res.filePaths[0];
+    if (res.canceled || res.filePaths.length === 0) return [];
     const fontsDir = path.join(db.getSettings().storagePath, 'fonts');
     fs.mkdirSync(fontsDir, { recursive: true });
-    const dest = path.join(fontsDir, path.basename(src));
-    fs.copyFileSync(src, dest);
-    return { name: path.parse(dest).name, path: dest };
+    return res.filePaths.map((src) => {
+      const dest = path.join(fontsDir, path.basename(src));
+      fs.copyFileSync(src, dest);
+      return { name: path.parse(dest).name, path: dest };
+    });
+  });
+
+  ipcMain.handle('fonts:download-pack', async () => {
+    const fontsDir = path.join(db.getSettings().storagePath, 'fonts');
+    fs.mkdirSync(fontsDir, { recursive: true });
+    let downloaded = 0;
+    for (const family of FREE_GOOGLE_TTF_FAMILIES) {
+      if (await downloadGoogleTtf(family, fontsDir)) downloaded += 1;
+    }
+    return { downloaded, total: FREE_GOOGLE_TTF_FAMILIES.length };
+  });
+
+  ipcMain.handle('fonts:open-folder', () => {
+    const fontsDir = path.join(db.getSettings().storagePath, 'fonts');
+    fs.mkdirSync(fontsDir, { recursive: true });
+    void shell.openPath(fontsDir);
   });
 
   ipcMain.handle('settings:get', () => db.getSettings());

@@ -3,11 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { Download, Plus, Upload } from 'lucide-react';
 import type { CaptionTemplate, LayoutMode, LayoutTemplate } from '../../../electron/types';
 import { Badge, Button, Card, Input, useToast } from '@/components/ui';
+import { FONT_CATALOG, registerLocalFontFaces } from '@/lib/fonts';
 
 export default function TemplatesPage() {
   const [captions, setCaptions] = useState<CaptionTemplate[]>([]);
   const [layouts, setLayouts] = useState<LayoutTemplate[]>([]);
   const [newName, setNewName] = useState('');
+  const [newFont, setNewFont] = useState('Alexandria');
   const [newColor, setNewColor] = useState('#22D3EE');
   const [layoutName, setLayoutName] = useState('');
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('stacked');
@@ -16,8 +18,14 @@ export default function TemplatesPage() {
 
   const load = async () => {
     if (!window.clipper) return;
-    setCaptions(await window.clipper.templates.listCaptions());
-    setLayouts(await window.clipper.templates.listLayouts());
+    const [ct, lt, local] = await Promise.all([
+      window.clipper.templates.listCaptions(),
+      window.clipper.templates.listLayouts(),
+      window.clipper.fonts.list(),
+    ]);
+    await registerLocalFontFaces(local);
+    setCaptions(ct);
+    setLayouts(lt);
   };
 
   useEffect(() => {
@@ -30,7 +38,7 @@ export default function TemplatesPage() {
       id: newName.toLowerCase().replace(/\s+/g, '-'),
       name: newName.trim(),
       description: 'Custom user template',
-      fontFamily: 'Montserrat',
+      fontFamily: newFont,
       fontSize: 76,
       primaryColor: '#FFFFFF',
       highlightColor: newColor,
@@ -103,9 +111,20 @@ export default function TemplatesPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="flex flex-wrap items-center gap-3 p-4">
-          <Input placeholder="New caption preset name..." value={newName} onChange={(e) => setNewName(e.target.value)} className="flex-1 min-w-[160px]" />
-          <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} className="h-9 w-12 cursor-pointer rounded border border-border bg-transparent" />
+        <Card className="flex flex-wrap items-center gap-2.5 p-4">
+          <Input placeholder="Caption preset name..." value={newName} onChange={(e) => setNewName(e.target.value)} className="flex-1 min-w-[130px]" />
+          <select
+            value={newFont}
+            onChange={(e) => setNewFont(e.target.value)}
+            className="h-9 max-w-[160px] rounded-lg border border-border bg-background px-2 text-xs"
+          >
+            {FONT_CATALOG.map((g) => (
+              <optgroup key={g.label} label={g.label}>
+                {g.fonts.map((f) => <option key={f} value={f}>{f}</option>)}
+              </optgroup>
+            ))}
+          </select>
+          <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} className="h-9 w-10 cursor-pointer rounded border border-border bg-transparent" />
           <Button onClick={createCaption}><Plus className="h-4 w-4" /> Caption</Button>
         </Card>
 
@@ -141,7 +160,10 @@ export default function TemplatesPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {captions.map((c) => (
             <Card key={c.id} className="flex flex-col justify-between gap-3 p-4">
-              <div className="flex h-20 items-center justify-center rounded-lg bg-zinc-950 text-lg font-extrabold" style={{ fontFamily: c.fontFamily }}>
+              <div
+                className="flex h-20 items-center justify-center rounded-lg bg-zinc-950 text-lg font-extrabold"
+                style={{ fontFamily: `"${c.fontFamily}", sans-serif` }}
+              >
                 <span style={{ color: c.primaryColor }}>THIS IS </span>
                 <span className="ml-1.5" style={{ color: c.highlightColor }}>VIRAL</span>
               </div>

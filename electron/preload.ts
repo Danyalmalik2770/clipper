@@ -30,7 +30,9 @@ const api = {
   },
   fonts: {
     list: (): Promise<Array<{ name: string; path: string; custom: boolean }>> => ipcRenderer.invoke('fonts:list'),
-    upload: (): Promise<{ name: string; path: string } | null> => ipcRenderer.invoke('fonts:upload'),
+    upload: (): Promise<Array<{ name: string; path: string }>> => ipcRenderer.invoke('fonts:upload'),
+    downloadFreePack: (): Promise<{ downloaded: number; total: number }> => ipcRenderer.invoke('fonts:download-pack'),
+    openFolder: (): Promise<void> => ipcRenderer.invoke('fonts:open-folder'),
   },
   settings: {
     get: (): Promise<AppSettings> => ipcRenderer.invoke('settings:get'),

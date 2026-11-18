@@ -6,7 +6,7 @@ import type { CaptionTemplate, ClipRecord, LayoutMode, LayoutTemplate, RectNorma
 import { Badge, Button, Card, Input, useToast } from '@/components/ui';
 import { formatSeconds, mediaUrl } from '@/lib/clipper-client';
 import { detectFacecamInVideo } from '@/lib/facecam';
-import { BUNDLED_GOOGLE_FONTS } from '@/lib/fonts';
+import { FONT_CATALOG, registerLocalFontFaces } from '@/lib/fonts';
 
 function EditorInner() {
   const params = useSearchParams();
@@ -18,11 +18,19 @@ function EditorInner() {
   const [clip, setClip] = useState<ClipRecord | null>(null);
   const [captionTpls, setCaptionTpls] = useState<CaptionTemplate[]>([]);
   const [layoutTpls, setLayoutTpls] = useState<LayoutTemplate[]>([]);
-  const [customFonts, setCustomFonts] = useState<string[]>([]);
+  const [localFonts, setLocalFonts] = useState<string[]>([]);
+  const [downloadingPack, setDownloadingPack] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [renderPct, setRenderPct] = useState<number | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+
+  const refreshLocalFonts = async () => {
+    if (!window.clipper) return;
+    const cf = await window.clipper.fonts.list();
+    await registerLocalFontFaces(cf);
+    setLocalFonts(cf.map((f) => f.name));
+  };
 
   useEffect(() => {
     if (!clipId || !window.clipper) return;
@@ -31,11 +39,12 @@ function EditorInner() {
       window.clipper.templates.listCaptions(),
       window.clipper.templates.listLayouts(),
       window.clipper.fonts.list(),
-    ]).then(([c, ct, lt, cf]) => {
+    ]).then(async ([c, ct, lt, cf]) => {
       setClip(c);
       setCaptionTpls(ct);
       setLayoutTpls(lt);
-      setCustomFonts(cf.map((f) => f.name));
+      await registerLocalFontFaces(cf);
+      setLocalFonts(cf.map((f) => f.name));
     });
 
     return window.clipper.onEvent((ev) => {
@@ -54,7 +63,6 @@ function EditorInner() {
     });
   }, [clipId, toast]);
 
-  // Live 9:16 canvas compositor synced to the source <video>
   useEffect(() => {
     let raf = 0;
     const draw = () => {
@@ -135,6 +143,8 @@ function EditorInner() {
   const activeWordIdx = clip.words.findIndex((w) => relTime >= w.start && relTime <= w.end);
   const phraseStart = activeWordIdx >= 0 ? Math.floor(activeWordIdx / 3) * 3 : 0;
   const visibleWords = clip.words.slice(phraseStart, phraseStart + 3);
+  const allCatalogNames = new Set(FONT_CATALOG.flatMap((g) => [...g.fonts]));
+  const extraLocalFonts = localFonts.filter((f) => !allCatalogNames.has(f));
 
   const persist = async (patch: Partial<ClipRecord>) => {
     const next = { ...clip, ...patch };
@@ -159,9 +169,8 @@ function EditorInner() {
     const rect = e.currentTarget.getBoundingClientRect();
     const nx = (e.clientX - rect.left) / rect.width;
     const ny = (e.clientY - rect.top) / rect.height;
-    if (phase === 'down') {
-      setDragStart({ x: nx, y: ny });
-    } else if (dragStart) {
+    if (phase === 'down') setDragStart({ x: nx, y: ny });
+    else if (dragStart) {
       const box: RectNormalized = {
         x: Math.max(0, Math.min(dragStart.x, nx)),
         y: Math.max(0, Math.min(dragStart.y, ny)),
@@ -248,29 +257,61 @@ function EditorInner() {
             ))}
           </div>
 
-          <div className="flex gap-2">
-            <select
-              value={clip.fontFamily}
-              onChange={(e) => persist({ fontFamily: e.target.value })}
-              className="h-9 flex-1 rounded-lg border border-border bg-background px-2 text-xs"
+          <select
+            value={clip.fontFamily}
+            onChange={(e) => persist({ fontFamily: e.target.value })}
+            className="h-9 w-full rounded-lg border border-border bg-background px-2 text-xs"
+          >
+            {extraLocalFonts.length > 0 && (
+              <optgroup label="Uploaded Custom (.ttf/.otf)">
+                {extraLocalFonts.map((f) => <option key={f} value={f}>{f}</option>)}
+              </optgroup>
+            )}
+            {FONT_CATALOG.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.fonts.map((f) => (
+                  <option key={f} value={f}>
+                    {localFonts.includes(f) ? `${f} [TTF Ready]` : f}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={downloadingPack}
+              onClick={async () => {
+                setDownloadingPack(true);
+                try {
+                  const res = await window.clipper?.fonts.downloadFreePack();
+                  await refreshLocalFonts();
+                  toast(`Downloaded ${res?.downloaded ?? 0} free .ttf fonts locally!`);
+                } finally {
+                  setDownloadingPack(false);
+                }
+              }}
             >
-              {[...BUNDLED_GOOGLE_FONTS, ...customFonts].map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
+              <Download className="h-3.5 w-3.5" /> {downloadingPack ? 'Downloading...' : 'Get Free TTFs'}
+            </Button>
             <Button
               size="sm"
               variant="secondary"
               onClick={async () => {
                 const uploaded = await window.clipper?.fonts.upload();
-                if (uploaded) {
-                  setCustomFonts((prev) => [...prev, uploaded.name]);
-                  void persist({ fontFamily: uploaded.name });
-                  toast(`Font "${uploaded.name}" added`);
+                if (uploaded && uploaded.length > 0) {
+                  await refreshLocalFonts();
+                  void persist({ fontFamily: uploaded[0].name });
+                  toast(`Added ${uploaded.length} font(s)`);
                 }
               }}
             >
-              <Upload className="h-3.5 w-3.5" /> .TTF
+              <Upload className="h-3.5 w-3.5" /> Add .TTF/.OTF
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => window.clipper?.fonts.openFolder()} title="Open fonts folder">
+              <FolderOpen className="h-3.5 w-3.5" />
             </Button>
           </div>
         </Card>
@@ -285,7 +326,7 @@ function EditorInner() {
               className={`absolute inset-x-4 text-center text-sm font-extrabold text-white drop-shadow ${
                 clip.titlePosition === 'top' ? 'top-5' : 'bottom-6'
               }`}
-              style={{ fontFamily: clip.fontFamily }}
+              style={{ fontFamily: `"${clip.fontFamily}", sans-serif` }}
             >
               <span className="rounded-md bg-black/70 px-3 py-1">{clip.title}</span>
             </div>
@@ -293,7 +334,7 @@ function EditorInner() {
 
           <div
             className="absolute inset-x-4 bottom-20 text-center text-xl font-extrabold leading-tight drop-shadow"
-            style={{ fontFamily: clip.fontFamily }}
+            style={{ fontFamily: `"${clip.fontFamily}", sans-serif` }}
           >
             {visibleWords.map((w, idx) => {
               const isActive = phraseStart + idx === activeWordIdx;
@@ -320,11 +361,7 @@ function EditorInner() {
           >
             {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
-          <Button
-            className="flex-1"
-            disabled={renderPct !== null}
-            onClick={() => window.clipper?.clips.render(clip.id)}
-          >
+          <Button className="flex-1" disabled={renderPct !== null} onClick={() => window.clipper?.clips.render(clip.id)}>
             <Download className="h-4 w-4" />
             {renderPct !== null ? `Rendering ${renderPct}%` : 'Export 1080x1920'}
           </Button>
