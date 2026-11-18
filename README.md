@@ -100,6 +100,12 @@ flowchart LR
   UI --> RENDER[FFmpeg 1080x1920 / 1920x1080 MP4 Export]
 ```
 
+## Platforms
+- **Windows** — ✅ `.exe` installer
+- **macOS** — ✅ `.dmg`
+- **Linux** — ✅ `.AppImage`
+- **iOS / Android** — ❌ Not supported. Clipper is a desktop app (Electron) and needs a computer — it cannot run on phones or tablets.
+
 ## Quick Install (Local PC)
 ```bash
 git clone https://github.com/Danyalmalik2770/clipper.git
