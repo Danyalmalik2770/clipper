@@ -103,8 +103,6 @@ flowchart LR
 ## Platforms
 - **Windows** — ✅ `.exe` installer
 - **macOS** — ✅ `.dmg`
-- **Linux** — ✅ `.AppImage`
-- **iOS / Android** — ❌ Not supported. Clipper is a desktop app (Electron) and needs a computer — it cannot run on phones or tablets.
 
 ## Quick Install (Local PC)
 ```bash
@@ -114,7 +112,7 @@ npm install
 npm run dev
 ```
 
-To generate the 512x512 desktop PNG icon and build a standalone installer (`.exe` / `.dmg` / `.AppImage`):
+To generate the 512x512 desktop PNG icon and build a standalone installer (`.exe` / `.dmg`):
 ```bash
 npx @resvg/resvg-js-cli build/icon.svg build/icon.png
 npm run build
