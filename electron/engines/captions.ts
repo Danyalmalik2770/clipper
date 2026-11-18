@@ -41,6 +41,8 @@ export function generateAssSubtitles(params: {
   title: string;
   titlePosition: 'top' | 'bottom' | 'hidden';
   durationSec: number;
+  playResX?: number;
+  playResY?: number;
 }): string {
   const tpl = params.template;
   const font = params.fontFamily || tpl.fontFamily;
@@ -54,8 +56,8 @@ export function generateAssSubtitles(params: {
   const lines: string[] = [
     '[Script Info]',
     'ScriptType: v4.00+',
-    'PlayResX: 1080',
-    'PlayResY: 1920',
+    `PlayResX: ${params.playResX ?? 1080}`,
+    `PlayResY: ${params.playResY ?? 1920}`,
     'WrapStyle: 2',
     'ScaledBorderAndShadow: yes',
     '',

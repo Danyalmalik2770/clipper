@@ -112,6 +112,10 @@ export class LocalDatabase {
       maxClipSeconds: 60,
       outputFps: 30,
       outputCrf: 20,
+      forceIpv4: false,
+      cookiesPath: '',
+      geminiApiKey: '',
+      geminiModel: 'gemini-2.5-flash',
       theme: 'dark',
     };
   }

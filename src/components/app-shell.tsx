@@ -1,10 +1,13 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Film, LayoutTemplate, Moon, Radio, Settings, Sun } from 'lucide-react';
 import { clsx } from 'clsx';
+import type { ClipRecord } from '../../electron/types';
 import { ClipperLogo } from '@/components/brand/clipper-logo';
+import { mediaUrl } from '@/lib/clipper-client';
+import { trackFacesInClip } from '@/lib/facecam';
 
 const NAV = [
   { href: '/', label: 'Dashboard', icon: Radio },
@@ -16,10 +19,35 @@ const NAV = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [dark, setDark] = useState(true);
+  const queueRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
   }, [dark]);
+
+  useEffect(() => {
+    if (!window.clipper) return;
+    return window.clipper.onEvent((ev) => {
+      if (ev.type === 'clip:detected') {
+        const clip: ClipRecord = ev.clip;
+        queueRef.current = queueRef.current.then(async () => {
+          const { primaryBox, faceTrack } = await trackFacesInClip(
+            mediaUrl(clip.sourcePath),
+            clip.startSec,
+            clip.endSec
+          );
+          if (faceTrack.length > 0 || primaryBox) {
+            await window.clipper?.clips.update({
+              ...clip,
+              facecamBox: primaryBox ?? clip.facecamBox,
+              faceTrack,
+              layoutMode: 'fullscreen',
+            });
+          }
+        });
+      }
+    });
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">

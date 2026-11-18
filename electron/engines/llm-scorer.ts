@@ -133,3 +133,124 @@ Transcript: """${text.slice(0, 1200)}"""`;
   }
   return fallback;
 }
+
+export interface TranscriptChunk {
+  startSec: number;
+  endSec: number;
+  text: string;
+}
+
+export interface ViralMomentPick {
+  startSec: number;
+  endSec: number;
+  score: number;
+  title: string;
+  reason: string;
+}
+
+/**
+ * Picks the top viral moments across a full transcript (used by the
+ * full-VOD pipeline). Scores every chunk with scoreTranscript (LLM when
+ * configured, built-in heuristics otherwise), expands the best chunks to
+ * the configured clip length and de-duplicates overlapping windows.
+ * Never throws: a failed chunk falls back to the free local scorer.
+ */
+export async function pickViralMomentsFromTranscript(
+  chunks: TranscriptChunk[],
+  settings: AppSettings,
+): Promise<ViralMomentPick[]> {
+  if (!chunks || chunks.length === 0) return [];
+  const scored: Array<{ chunk: TranscriptChunk; a: TranscriptAnalysis }> = [];
+  for (const chunk of chunks) {
+    const text = (chunk.text || '').trim();
+    if (!text) continue;
+    let a: TranscriptAnalysis;
+    try {
+      a = await scoreTranscript(text, settings);
+    } catch {
+      a = scoreTranscriptFreeLocal(text);
+    }
+    scored.push({ chunk, a });
+  }
+  scored.sort((x, y) => y.a.score - x.a.score);
+  const picks: ViralMomentPick[] = [];
+  for (const s of scored) {
+    if (picks.length >= 8) break;
+    let start = s.chunk.startSec;
+    let end = s.chunk.endSec;
+    const len = end - start;
+    if (len < settings.minClipSeconds) {
+      const pad = (settings.minClipSeconds - len) / 2;
+      start = Math.max(0, start - pad);
+      end += pad;
+    }
+    if (end - start > settings.maxClipSeconds) end = start + settings.maxClipSeconds;
+    if (picks.some((p) => Math.abs(p.startSec - start) < settings.minClipSeconds)) continue;
+    picks.push({
+      startSec: Number(start.toFixed(2)),
+      endSec: Number(end.toFixed(2)),
+      score: s.a.score,
+      title: s.a.title,
+      reason: s.a.reason,
+    });
+  }
+  return picks.sort((a, b) => a.startSec - b.startSec);
+}
+
+/**
+ * Tests the configured LLM provider connection for the Settings page.
+ * Returns { ok, message } and never throws.
+ */
+export async function testLlmConnection(
+  settings: AppSettings,
+): Promise<{ ok: boolean; message: string }> {
+  const provider = settings.llmProvider;
+  if (provider === 'none') {
+    return { ok: true, message: 'Built-in free local scorer is active — no API key needed.' };
+  }
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    if (provider === 'openai') {
+      if (!settings.openaiApiKey) return { ok: false, message: 'OpenAI API key is empty.' };
+      const res = await fetch('https://api.openai.com/v1/models', {
+        headers: { Authorization: `Bearer ${settings.openaiApiKey}` },
+        signal: ctrl.signal,
+      });
+      return res.ok
+        ? { ok: true, message: 'OpenAI connection OK.' }
+        : { ok: false, message: `OpenAI replied ${res.status} — check the API key.` };
+    }
+    if (provider === 'anthropic') {
+      if (!settings.anthropicApiKey) return { ok: false, message: 'Anthropic API key is empty.' };
+      const res = await fetch('https://api.anthropic.com/v1/models', {
+        headers: { 'x-api-key': settings.anthropicApiKey, 'anthropic-version': '2023-06-01' },
+        signal: ctrl.signal,
+      });
+      return res.ok
+        ? { ok: true, message: 'Anthropic connection OK.' }
+        : { ok: false, message: `Anthropic replied ${res.status} — check the API key.` };
+    }
+    if (provider === 'gemini') {
+      if (!settings.geminiApiKey) return { ok: false, message: 'Gemini API key is empty.' };
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(settings.geminiApiKey)}`,
+        { signal: ctrl.signal },
+      );
+      return res.ok
+        ? { ok: true, message: `Gemini connection OK (model: ${settings.geminiModel || 'gemini-2.5-flash'}).` }
+        : { ok: false, message: `Gemini replied ${res.status} — check the API key.` };
+    }
+    // ollama
+    const base = (settings.ollamaUrl || 'http://127.0.0.1:11434').replace(/\/+$/, '');
+    const res = await fetch(`${base}/api/tags`, { signal: ctrl.signal });
+    return res.ok
+      ? { ok: true, message: `Ollama reachable at ${base}.` }
+      : { ok: false, message: `Ollama replied ${res.status} at ${base}.` };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, message: `Connection failed: ${msg}` };
+  } finally {
+    clearTimeout(timer);
+  }
+}

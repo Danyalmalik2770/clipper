@@ -1,24 +1,31 @@
 export type StreamStatus = 'idle' | 'ingesting' | 'stopped' | 'error';
+export type LayoutMode = 'fullscreen' | 'stacked' | 'pip' | 'split' | 'blur';
+export type LLMProvider = 'none' | 'openai' | 'anthropic' | 'ollama' | 'gemini';
 export type DownloadState =
   | 'idle'
   | 'downloading'
+  | 'analyzing'
   | 'throttled-retrying'
   | 'blocked-waiting'
-  | 'stopped'
-  | 'error';
-export type LayoutMode = 'fullscreen' | 'stacked' | 'pip' | 'split';
-export type LLMProvider = 'none' | 'openai' | 'anthropic' | 'ollama';
+  | 'stopped';
+export type ExportOrientation = 'vertical' | 'horizontal' | 'both';
+
+export interface FaceKeyframe {
+  t: number; // seconds relative to clip start
+  cx: number; // 0..1 face centre x
+  cy: number; // 0..1 face centre y
+}
 
 export interface RectNormalized {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
+  x: number; // 0..1
+  y: number; // 0..1
+  w: number; // 0..1
+  h: number; // 0..1
 }
 
 export interface WordToken {
   word: string;
-  start: number;
+  start: number; // seconds relative to clip start
   end: number;
   confidence?: number;
 }
@@ -30,18 +37,15 @@ export interface StreamRecord {
   channel: string;
   isLive: boolean;
   status: StreamStatus;
+  downloadState?: DownloadState;
   bufferSeconds: number;
   clipsCount: number;
   createdAt: number;
   errorMessage?: string | null;
-  downloadState?: DownloadState;
-  retryInSec?: number;
-  activeClient?: string;
-  downloadSpeedKbps?: number;
 }
 
 export interface SignalSample {
-  timestamp: number;
+  timestamp: number; // stream relative seconds
   chatScore: number;
   audioScore: number;
   motionScore: number;
@@ -69,6 +73,7 @@ export interface ClipRecord {
   profanityMask: boolean;
   titlePosition: 'top' | 'bottom' | 'hidden';
   facecamBox: RectNormalized | null;
+  faceTrack?: FaceKeyframe[];
   suggestedLayout: LayoutMode;
   words: WordToken[];
   createdAt: number;
@@ -96,9 +101,9 @@ export interface LayoutTemplate {
   id: string;
   name: string;
   mode: LayoutMode;
-  topRatio?: number;
+  topRatio?: number; // for stacked (e.g., 0.38 = 38% facecam)
   pipPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  pipScale?: number;
+  pipScale?: number; // 0.2..0.45
   pipRounded?: boolean;
   smartCrop?: boolean;
   blurBackground?: boolean;
@@ -117,11 +122,13 @@ export interface AppSettings {
   viralityThreshold: number;
   minClipSeconds: number;
   maxClipSeconds: number;
+  forceIpv4: boolean;
+  cookiesPath: string;
+  geminiApiKey: string;
+  geminiModel: string;
   outputFps: 30 | 60;
   outputCrf: number;
   theme: 'dark' | 'light';
-  forceIpv4?: boolean;
-  cookiesPath?: string;
 }
 
 export type ClipperEvent =

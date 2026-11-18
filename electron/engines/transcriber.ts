@@ -109,7 +109,7 @@ export class LocalTranscriber {
         nodeFetchWithCaAndProxy(input, init)) as typeof fetch;
     } else {
       globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) =>
-        net.fetch(input, init)) as typeof fetch;
+        (net.fetch as typeof fetch)(input, init)) as typeof fetch;
     }
   }
 

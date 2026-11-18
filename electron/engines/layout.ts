@@ -25,9 +25,11 @@ export function buildLayoutFilterGraph(params: {
   mode: LayoutMode;
   template: LayoutTemplate;
   facecamBox: RectNormalized | null;
+  targetWidth?: number;
+  targetHeight?: number;
 }): FilterGraphResult {
-  const W = 1080;
-  const H = 1920;
+  const W = params.targetWidth ?? 1080;
+  const H = params.targetHeight ?? 1920;
   const sw = Math.max(320, params.sourceWidth);
   const sh = Math.max(180, params.sourceHeight);
 
@@ -73,7 +75,7 @@ export function buildLayoutFilterGraph(params: {
 
   if (params.mode === 'split') {
     const halfW = W / 2;
-    const midH = 960;
+    const midH = clampEven(H / 2);
     const filterComplex = [
       `[0:v]split=3[vblur][vl][vr]`,
       `[vblur]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},boxblur=24:6[bg]`,
@@ -86,7 +88,7 @@ export function buildLayoutFilterGraph(params: {
     return { filterComplex, videoMap: '[vout]', suggestedMode: suggestLayoutFromFacecam(params.facecamBox) };
   }
 
-  const cropW = clampEven(Math.min(sw, sh * (9 / 16)));
+  const cropW = clampEven(Math.min(sw, sh * (W / H)));
   const faceCenterX = (box.x + box.w / 2) * sw;
   const cropX = params.facecamBox && params.template.smartCrop !== false
     ? clampEven(Math.min(sw - cropW, Math.max(0, faceCenterX - cropW / 2)))

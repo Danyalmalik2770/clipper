@@ -49,11 +49,15 @@ export async function renderVerticalClip(params: {
   outputPath: string;
   fps: 30 | 60;
   crf: number;
+  orientation?: 'vertical' | 'horizontal';
   onProgress: (percent: number) => void;
 }): Promise<void> {
   const { clip } = params;
   const dims = await probeDimensions(params.ffprobePath, clip.sourcePath);
   const duration = Math.max(1, clip.endSec - clip.startSec);
+  const horizontal = params.orientation === 'horizontal';
+  const targetWidth = horizontal ? 1920 : 1080;
+  const targetHeight = horizontal ? 1080 : 1920;
 
   const layout = buildLayoutFilterGraph({
     sourceWidth: dims.width,
@@ -61,6 +65,8 @@ export async function renderVerticalClip(params: {
     mode: clip.layoutMode,
     template: params.layoutTemplate,
     facecamBox: clip.facecamBox,
+    targetWidth,
+    targetHeight,
   });
 
   const assContent = generateAssSubtitles({
@@ -71,6 +77,8 @@ export async function renderVerticalClip(params: {
     title: clip.title,
     titlePosition: clip.titlePosition,
     durationSec: duration,
+    playResX: targetWidth,
+    playResY: targetHeight,
   });
 
   const assPath = path.join(os.tmpdir(), `clipper_${clip.id}.ass`);

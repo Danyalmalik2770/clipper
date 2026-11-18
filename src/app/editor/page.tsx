@@ -2,11 +2,31 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Download, FolderOpen, Pause, Play, ScanFace, Sparkles, Upload } from 'lucide-react';
-import type { CaptionTemplate, ClipRecord, LayoutMode, LayoutTemplate, RectNormalized } from '../../../electron/types';
+import type {
+  CaptionTemplate,
+  ClipRecord,
+  ExportOrientation,
+  FaceKeyframe,
+  LayoutMode,
+  LayoutTemplate,
+  RectNormalized,
+} from '../../../electron/types';
 import { Badge, Button, Card, Input, useToast } from '@/components/ui';
 import { formatSeconds, mediaUrl } from '@/lib/clipper-client';
-import { detectFacecamInVideo } from '@/lib/facecam';
+import { trackFacesInClip } from '@/lib/facecam';
 import { FONT_CATALOG, registerLocalFontFaces } from '@/lib/fonts';
+
+function getFaceCenterAtTime(track: FaceKeyframe[] | undefined, relSec: number, fallbackBox: RectNormalized | null): number {
+  if (track && track.length > 0) {
+    let active = track[0].cx;
+    for (const kf of track) {
+      if (kf.t <= relSec) active = kf.cx;
+      else break;
+    }
+    return active;
+  }
+  return fallbackBox ? fallbackBox.x + fallbackBox.w / 2 : 0.5;
+}
 
 function EditorInner() {
   const params = useSearchParams();
@@ -20,6 +40,8 @@ function EditorInner() {
   const [layoutTpls, setLayoutTpls] = useState<LayoutTemplate[]>([]);
   const [localFonts, setLocalFonts] = useState<string[]>([]);
   const [downloadingPack, setDownloadingPack] = useState(false);
+  const [trackingFaces, setTrackingFaces] = useState(false);
+  const [orientation, setOrientation] = useState<ExportOrientation>('vertical');
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [renderPct, setRenderPct] = useState<number | null>(null);
@@ -84,7 +106,17 @@ function EditorInner() {
           ctx.fillStyle = '#000';
           ctx.fillRect(0, 0, W, H);
 
-          if (clip.layoutMode === 'stacked') {
+          if (orientation === 'horizontal') {
+            const drawH = Math.round(W * (sh / sw));
+            ctx.drawImage(v, 0, 0, sw, sh, 0, Math.round((H - drawH) / 2), W, drawH);
+          } else if (clip.layoutMode === 'blur') {
+            ctx.save();
+            ctx.filter = 'blur(14px) brightness(0.85)';
+            ctx.drawImage(v, sw * 0.2, 0, sw * 0.6, sh, 0, 0, W, H);
+            ctx.restore();
+            const fgH = Math.round(W * (sh / sw));
+            ctx.drawImage(v, 0, 0, sw, sh, 0, Math.round((H - fgH) / 2), W, fgH);
+          } else if (clip.layoutMode === 'stacked') {
             const topH = Math.round(H * 0.38);
             ctx.drawImage(v, fx, fy, fw, fh, 0, 0, W, topH);
             const cropW = Math.min(sw, sh * (W / (H - topH)));
@@ -106,7 +138,9 @@ function EditorInner() {
             ctx.drawImage(v, sw * 0.25, 0, sw * 0.5, sh, W / 2, midY, W / 2, midH);
           } else {
             const cropW = Math.min(sw, sh * (9 / 16));
-            const cx = clip.facecamBox ? Math.min(sw - cropW, Math.max(0, (box.x + box.w / 2) * sw - cropW / 2)) : (sw - cropW) / 2;
+            const rel = Math.max(0, v.currentTime - clip.startSec);
+            const faceCx = getFaceCenterAtTime(clip.faceTrack, rel, clip.facecamBox);
+            const cx = Math.min(sw - cropW, Math.max(0, faceCx * sw - cropW / 2));
             ctx.drawImage(v, cx, 0, cropW, sh, 0, 0, W, H);
           }
         }
@@ -115,7 +149,7 @@ function EditorInner() {
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [clip]);
+  }, [clip, orientation]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -129,12 +163,12 @@ function EditorInner() {
       } else if (e.key.toLowerCase() === 'l' && videoRef.current) {
         videoRef.current.currentTime += 2;
       } else if (e.key.toLowerCase() === 'e' && clip) {
-        void window.clipper?.clips.render(clip.id);
+        void window.clipper?.clips.render(clip.id, orientation);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [clip]);
+  }, [clip, orientation]);
 
   if (!clip) return <div className="p-8 text-sm text-foreground/60">Loading clip in Editor...</div>;
 
@@ -152,16 +186,28 @@ function EditorInner() {
     await window.clipper?.clips.update(next);
   };
 
-  const runFacecamDetect = async () => {
-    if (!videoRef.current) return;
-    toast('Scanning frames with local MediaPipe...');
-    const box = await detectFacecamInVideo(videoRef.current);
-    if (box) {
-      await persist({ facecamBox: box, suggestedLayout: 'stacked', layoutMode: 'stacked' });
-      toast('Facecam detected! Suggested Stacked layout.');
-    } else {
-      await persist({ facecamBox: null, suggestedLayout: 'fullscreen', layoutMode: 'fullscreen' });
-      toast('No facecam found - using Fullscreen layout.');
+  const runFaceTrack = async () => {
+    setTrackingFaces(true);
+    toast('Tracking faces across clip frames with MediaPipe...');
+    try {
+      const { primaryBox, faceTrack } = await trackFacesInClip(
+        mediaUrl(clip.sourcePath),
+        clip.startSec,
+        clip.endSec
+      );
+      if (faceTrack.length > 0 || primaryBox) {
+        await persist({
+          facecamBox: primaryBox ?? clip.facecamBox,
+          faceTrack,
+          layoutMode: 'fullscreen',
+          suggestedLayout: 'fullscreen',
+        });
+        toast(`Tracked ${faceTrack.length} face keyframes! 9:16 crop will follow speaker.`);
+      } else {
+        toast('No face detected - centered 9:16 crop applied.');
+      }
+    } finally {
+      setTrackingFaces(false);
     }
   };
 
@@ -178,23 +224,26 @@ function EditorInner() {
         h: Math.max(0.1, Math.abs(ny - dragStart.y)),
       };
       setDragStart(null);
-      void persist({ facecamBox: box, suggestedLayout: 'stacked' });
-      toast('Manual facecam region updated');
+      void persist({ facecamBox: box, faceTrack: [] });
+      toast('Manual focus / facecam region updated');
     }
   };
+
+  const minTrimStart = Math.max(0, Math.floor(clip.startSec - 20));
+  const maxTrimEnd = Math.ceil(clip.endSec + 30);
 
   return (
     <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-12">
       <div className="space-y-4 lg:col-span-4">
         <Card className="space-y-3 p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">Layout &amp; Facecam</h2>
-            <Button size="sm" variant="secondary" onClick={runFacecamDetect}>
-              <ScanFace className="h-3.5 w-3.5" /> Auto-Detect
+            <h2 className="text-sm font-semibold">Layout &amp; Face Tracking</h2>
+            <Button size="sm" variant="secondary" disabled={trackingFaces} onClick={runFaceTrack}>
+              <ScanFace className="h-3.5 w-3.5" /> {trackingFaces ? 'Tracking...' : 'Auto-Track Face'}
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            {(['fullscreen', 'stacked', 'pip', 'split'] as LayoutMode[]).map((mode) => (
+          <div className="grid grid-cols-3 gap-2">
+            {(['fullscreen', 'stacked', 'pip', 'split', 'blur'] as LayoutMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() =>
@@ -203,16 +252,20 @@ function EditorInner() {
                     layoutTemplateId: layoutTpls.find((l) => l.mode === mode)?.id ?? clip.layoutTemplateId,
                   })
                 }
-                className={`rounded-lg border px-3 py-2 text-xs font-medium capitalize transition ${
+                className={`rounded-lg border px-2.5 py-2 text-xs font-medium capitalize transition ${
                   clip.layoutMode === mode ? 'border-violet-500 bg-violet-500/15 text-violet-300' : 'border-border hover:bg-muted'
                 }`}
               >
-                {mode} {clip.suggestedLayout === mode && '*'}
+                {mode}
               </button>
             ))}
           </div>
 
-          <p className="text-[11px] text-foreground/50">Drag on the source frame to manually select facecam:</p>
+          <p className="text-[11px] text-foreground/50">
+            {clip.faceTrack && clip.faceTrack.length > 0
+              ? `Active face track: ${clip.faceTrack.length} keyframes. Drag frame below to override manually:`
+              : 'Drag on source frame to manually select face / focus area:'}
+          </p>
           <div
             className="relative aspect-video cursor-crosshair overflow-hidden rounded-lg border border-border bg-black"
             onMouseDown={(e) => handleManualBox(e, 'down')}
@@ -222,6 +275,10 @@ function EditorInner() {
               ref={videoRef}
               src={mediaUrl(clip.sourcePath)}
               className="h-full w-full object-contain"
+              onLoadedMetadata={(e) => {
+                e.currentTarget.currentTime = clip.startSec;
+                setCurrentTime(clip.startSec);
+              }}
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
               onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
@@ -318,22 +375,35 @@ function EditorInner() {
       </div>
 
       <div className="flex flex-col items-center gap-4 lg:col-span-4">
-        <div className="relative aspect-[9/16] w-full max-w-[330px] overflow-hidden rounded-2xl border border-border bg-black shadow-2xl">
-          <canvas ref={canvasRef} width={360} height={640} className="h-full w-full object-cover" />
+        <div
+          className={`relative w-full overflow-hidden rounded-2xl border border-border bg-black shadow-2xl ${
+            orientation === 'horizontal' ? 'aspect-video max-w-[440px]' : 'aspect-[9/16] max-w-[330px]'
+          }`}
+        >
+          <canvas
+            ref={canvasRef}
+            width={orientation === 'horizontal' ? 480 : 360}
+            height={orientation === 'horizontal' ? 270 : 640}
+            className="h-full w-full object-cover"
+          />
 
           {clip.titlePosition !== 'hidden' && (
             <div
-              className={`absolute inset-x-4 text-center text-sm font-extrabold text-white drop-shadow ${
+              className={`absolute inset-x-4 text-center text-xs font-extrabold ${
                 clip.titlePosition === 'top' ? 'top-5' : 'bottom-6'
               }`}
               style={{ fontFamily: `"${clip.fontFamily}", sans-serif` }}
             >
-              <span className="rounded-md bg-black/70 px-3 py-1">{clip.title}</span>
+              <span className="inline-block rounded-lg bg-white px-3 py-1.5 text-zinc-950 shadow-lg">
+                {clip.title}
+              </span>
             </div>
           )}
 
           <div
-            className="absolute inset-x-4 bottom-20 text-center text-xl font-extrabold leading-tight drop-shadow"
+            className={`absolute inset-x-4 text-center font-extrabold leading-tight drop-shadow ${
+              orientation === 'horizontal' ? 'bottom-5 text-base' : 'bottom-20 text-xl'
+            }`}
             style={{ fontFamily: `"${clip.fontFamily}", sans-serif` }}
           >
             {visibleWords.map((w, idx) => {
@@ -354,26 +424,41 @@ function EditorInner() {
           </div>
         </div>
 
-        <div className="flex w-full max-w-[330px] items-center gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => (videoRef.current?.paused ? void videoRef.current.play() : videoRef.current?.pause())}
+        <div className="flex w-full max-w-[360px] flex-col gap-2">
+          <select
+            value={orientation}
+            onChange={(e) => setOrientation(e.target.value as ExportOrientation)}
+            className="h-9 w-full rounded-lg border border-border bg-card px-3 text-xs font-medium"
           >
-            {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </Button>
-          <Button className="flex-1" disabled={renderPct !== null} onClick={() => window.clipper?.clips.render(clip.id)}>
-            <Download className="h-4 w-4" />
-            {renderPct !== null ? `Rendering ${renderPct}%` : 'Export 1080x1920'}
-          </Button>
-          {clip.renderedPath && (
+            <option value="vertical">9:16 Vertical Reel (1080x1920)</option>
+            <option value="horizontal">16:9 Horizontal YouTube (1920x1080)</option>
+            <option value="both">Export Both (Vertical + Horizontal)</option>
+          </select>
+          <div className="flex items-center gap-2">
             <Button
               variant="secondary"
-              onClick={() => window.clipper?.clips.revealInFolder(clip.renderedPath!)}
-              title="Open exported MP4 folder"
+              onClick={() => (videoRef.current?.paused ? void videoRef.current.play() : videoRef.current?.pause())}
             >
-              <FolderOpen className="h-4 w-4" />
+              {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             </Button>
-          )}
+            <Button
+              className="flex-1"
+              disabled={renderPct !== null}
+              onClick={() => window.clipper?.clips.render(clip.id, orientation)}
+            >
+              <Download className="h-4 w-4" />
+              {renderPct !== null ? `Rendering ${renderPct}%` : 'Export MP4'}
+            </Button>
+            {clip.renderedPath && (
+              <Button
+                variant="secondary"
+                onClick={() => window.clipper?.clips.revealInFolder(clip.renderedPath!)}
+                title="Open exported MP4 folder"
+              >
+                <FolderOpen className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         <p className="text-[11px] text-foreground/50">Shortcuts: Space (Play) | J/L (-/+2s) | E (Export)</p>
       </div>
@@ -411,8 +496,8 @@ function EditorInner() {
             </div>
             <input
               type="range"
-              min={0}
-              max={Math.max(clip.endSec - 5, 1)}
+              min={minTrimStart}
+              max={Math.max(minTrimStart + 1, clip.endSec - 5)}
               step={0.5}
               value={clip.startSec}
               onChange={(e) => persist({ startSec: Number(e.target.value), durationSec: clip.endSec - Number(e.target.value) })}
@@ -421,7 +506,7 @@ function EditorInner() {
             <input
               type="range"
               min={clip.startSec + 5}
-              max={clip.startSec + 60}
+              max={maxTrimEnd}
               step={0.5}
               value={clip.endSec}
               onChange={(e) => persist({ endSec: Number(e.target.value), durationSec: Number(e.target.value) - clip.startSec })}
