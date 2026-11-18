@@ -48,7 +48,7 @@
 ### Captions — automatic and word-perfect
 - **Offline Whisper transcription**: local ONNX Whisper models (downloaded once, to your machine) produce **word-level timestamps** — no audio ever leaves your PC.
 - **8 caption templates**: Bold Pop, Karaoke Highlight, Minimal Clean, Neon Glow, Comic, Typewriter, Boxed and Gradient.
-- **15+ showcase fonts** built in and auto-downloaded, plus upload your own `.ttf/.otf` fonts.
+- **99 fonts in the built-in catalog** (19 free Google Fonts auto-download as TTF; the rest are listed by style — Modern, Bold/Display, Script/Retro and system fonts), plus upload your own `.ttf/.otf` fonts.
 - **Profanity masking** and title overlays (top / bottom / hidden).
 
 ### Editor — make it look pro
