@@ -8,6 +8,10 @@
 </p>
 
 <p align="center">
+  Clipper turns YouTube live streams, full videos and your own local files into ready-to-post viral clips — automatically. It watches chat, audio, motion and speech to find the moments everyone will replay, transcribes them locally with word-level Whisper captions, follows the speaker's face with smart 9:16 layouts, and exports polished vertical or horizontal MP4s. Everything runs on your own machine: no cloud, no accounts, no subscriptions.
+</p>
+
+<p align="center">
   <a href="https://muse.ai/files/1449552968231931/1401354681799909/vtaxwfsm2hjzaluptdfvrinv/clipper-promo.mp4">
     <img src="https://muse.ai/files/1449552968231931/2222540668339107/1h23mcc4rzfbzgw0intfhn0x/clipper-promo-poster.png" alt="Watch the Clipper promo video" width="80%" />
   </a>
