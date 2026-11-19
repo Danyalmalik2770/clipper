@@ -3,59 +3,78 @@ body {
   margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: #0d0a1a; color: #ece9f7; min-height: 100vh;
 }
-header { text-align: center; padding: 34px 16px 6px; }
-.logo { font-size: 40px; font-weight: 800; letter-spacing: 3px; }
+header { text-align: center; padding: 44px 16px 10px; }
+.logo { font-size: 56px; font-weight: 800; letter-spacing: 4px; }
 .logo span { color: #a855f7; }
-.tag { color: #b7aedd; margin-top: 4px; }
-main { max-width: 760px; margin: 0 auto; padding: 18px 14px 30px; }
+.tag { color: #b7aedd; margin-top: 6px; font-size: 18px; }
+main {
+  max-width: 1760px; width: 96vw; margin: 0 auto; padding: 22px 0 34px;
+  display: grid; grid-template-columns: 1fr; gap: 18px;
+}
 .card {
   background: #171130; border: 1px solid #2c2154; border-radius: 14px;
-  padding: 20px; margin-bottom: 16px;
+  padding: 26px;
 }
-.card h2 { margin: 0 0 12px; font-size: 19px; }
+.card h2 { margin: 0 0 14px; font-size: 22px; }
 .hidden { display: none; }
 #drop {
-  border: 2px dashed #4c3a8f; border-radius: 12px; padding: 30px 16px;
+  border: 2px dashed #4c3a8f; border-radius: 12px; padding: 44px 20px;
   text-align: center; cursor: pointer; transition: border-color .2s, background .2s;
 }
 #drop:hover, #drop.over { border-color: #a855f7; background: #1d1440; }
-.big { font-size: 17px; font-weight: 600; margin: 0 0 6px; }
-.small { color: #b7aedd; font-size: 13.5px; line-height: 1.45; }
-.note { color: #8f83bd; font-size: 12.5px; line-height: 1.45; margin-top: 12px; }
-video { width: 100%; border-radius: 10px; margin-top: 14px; background: #000; display: none; }
+.big { font-size: 19px; font-weight: 600; margin: 0 0 6px; }
+.small { color: #b7aedd; font-size: 14.5px; line-height: 1.5; }
+.note { color: #8f83bd; font-size: 13.5px; line-height: 1.5; margin-top: 12px; }
+video {
+  width: 100%; max-height: 66vh; border-radius: 10px; margin-top: 16px;
+  background: #000; display: none; object-fit: contain;
+}
 #caption-overlay-wrap { position: relative; }
 #caption-overlay {
-  text-align: center; font-weight: 800; font-size: 20px; color: #fff;
-  text-shadow: 0 2px 8px #000; min-height: 28px; margin-top: 8px;
+  text-align: center; font-weight: 800; font-size: 24px; color: #fff;
+  text-shadow: 0 2px 8px #000; min-height: 32px; margin-top: 10px;
 }
 button {
   background: #241a4d; color: #ece9f7; border: 1px solid #4c3a8f;
-  border-radius: 9px; padding: 11px 16px; font-size: 14.5px; cursor: pointer;
+  border-radius: 9px; padding: 13px 20px; font-size: 15.5px; cursor: pointer;
   margin: 6px 6px 6px 0;
 }
 button:hover { border-color: #a855f7; }
 button.primary { background: #7c3aed; border-color: #7c3aed; font-weight: 700; }
 button.primary:hover { background: #8b46f5; }
 button:disabled { opacity: .5; cursor: wait; }
-.status { color: #c9bdf2; font-size: 13.5px; margin: 8px 0; white-space: pre-wrap; }
+.status { color: #c9bdf2; font-size: 14.5px; margin: 8px 0; white-space: pre-wrap; }
 .moment {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
   background: #1d1440; border: 1px solid #2c2154; border-radius: 10px;
-  padding: 11px 14px; margin-top: 8px; cursor: pointer;
+  padding: 14px 16px; margin-top: 8px; cursor: pointer; font-size: 15.5px;
 }
 .moment:hover, .moment.sel { border-color: #a855f7; }
 .moment .t { font-weight: 700; }
 .moment .score { color: #a855f7; font-weight: 800; }
 .row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
-.row label { font-size: 13px; color: #b7aedd; display: flex; flex-direction: column; gap: 5px; }
+.row label { font-size: 14px; color: #b7aedd; display: flex; flex-direction: column; gap: 5px; }
 .row input {
   background: #0d0a1a; border: 1px solid #4c3a8f; color: #ece9f7;
-  border-radius: 7px; padding: 8px; width: 130px; font-size: 14px;
+  border-radius: 7px; padding: 9px; width: 140px; font-size: 15px;
 }
 progress { width: 100%; height: 14px; margin-top: 8px; accent-color: #7c3aed; }
 #downloads a {
   display: inline-block; margin: 10px 8px 0 0; background: #14532d; color: #d1fae5;
-  padding: 11px 16px; border-radius: 9px; text-decoration: none; font-weight: 700;
+  padding: 12px 18px; border-radius: 9px; text-decoration: none; font-weight: 700;
 }
-footer { text-align: center; color: #8f83bd; font-size: 13px; padding: 6px 16px 34px; line-height: 1.5; }
+footer { text-align: center; color: #8f83bd; font-size: 14px; padding: 6px 16px 38px; line-height: 1.55; }
 footer a { color: #a855f7; }
+
+/* Wide desktop layout — designed for 1920x1080 screens */
+@media (min-width: 1100px) {
+  main { grid-template-columns: 1fr 1fr; }
+  #step-upload { grid-column: 1 / -1; }
+}
+/* Small screens */
+@media (max-width: 700px) {
+  .logo { font-size: 38px; }
+  .tag { font-size: 15px; }
+  header { padding-top: 28px; }
+  #drop { padding: 30px 14px; }
+}
