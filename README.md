@@ -104,7 +104,18 @@ flowchart LR
 - **Windows** — ✅ `.exe` installer
 - **macOS** — ✅ `.dmg`
 
-## Quick Install (Local PC)
+## Easy Setup (one click — recommended)
+
+No Node.js install, no terminal commands. The setup file brings its own Node.js (LTS), downloads everything, fixes the native bits and opens Clipper for you.
+
+1. Download this repo (green **Code** button → **Download ZIP**) and unzip it.
+2. **Mac:** double-click **`Clipper Setup.command`** — the first time, right-click it → **Open** → **Open**. (If it opens as a text file instead, open Terminal in the folder and run `bash "Clipper Setup.command"`.)
+3. **Windows:** double-click **`Clipper Setup.bat`**.
+4. Wait for the first install to finish — Clipper opens by itself. Next time, just double-click the same file again to start Clipper.
+
+## Manual Install (Local PC)
+
+Needs **Node.js LTS (v24)** — newer "Current" releases (e.g. v26) can fail to build the native database module; the one-click setup above avoids this by using its own LTS.
 ```bash
 git clone https://github.com/Danyalmalik2770/clipper.git
 cd clipper

@@ -5,6 +5,7 @@
   "main": "dist-electron/main.js",
   "license": "MIT",
   "scripts": {
+    "postinstall": "node scripts/postinstall.js",
     "dev:next": "next dev -p 3000",
     "dev:electron": "tsc -p tsconfig.electron.json && cross-env CLIPPER_DEV=1 electron .",
     "dev": "concurrently -k \"npm:dev:next\" \"wait-on http://localhost:3000 && npm:dev:electron\"",
