@@ -104,6 +104,14 @@ flowchart LR
 - **Windows** — ✅ `.exe` installer
 - **macOS** — ✅ `.dmg`
 
+## Clipper Web (no install — use it in your browser)
+
+No time to install? Use **Clipper Web**: upload a video file on the website and get a vertical clip with AI captions — moments, transcription and export all run 100% in your browser, your video never leaves your device.
+
+**https://danyalmalik2770.github.io/clipper/**
+
+(One limit: a browser cannot download videos from YouTube links — for link downloads and live streams, use the desktop app below.)
+
 ## Easy Setup (one click — recommended)
 
 No Node.js install, no terminal commands. The setup file brings its own Node.js (LTS), downloads everything, fixes the native bits and opens Clipper for you.

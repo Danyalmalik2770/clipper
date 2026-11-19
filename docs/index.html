@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clipper Web — Turn long videos into viral clips, right in your browser</title>
+<meta name="description" content="Free online clip maker: upload a video, find its most viral moments, add word-by-word captions and export vertical 9:16 clips. 100% private — your video never leaves your device.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="logo">CLIPPER <span>WEB</span></div>
+  <div class="tag">Long video in. Viral clip out. No install.</div>
+</header>
+
+<main>
+  <section class="card" id="step-upload">
+    <h2>1. Add your video</h2>
+    <div id="drop">
+      <p class="big">Drop a video file here, or click to choose one</p>
+      <p class="small">MP4, WebM, MOV — processed 100% on your device. Nothing is uploaded.</p>
+      <input type="file" id="file" accept="video/*" hidden>
+    </div>
+    <p class="note">Note: a browser cannot download videos from YouTube links (browser security rules) — upload the video file itself. For link downloads, use the desktop app.</p>
+    <video id="preview" controls playsinline></video>
+    <div id="caption-overlay-wrap">
+      <div id="caption-overlay"></div>
+    </div>
+  </section>
+
+  <section class="card hidden" id="step-moments">
+    <h2>2. Find viral moments</h2>
+    <p class="small">Clipper scans the audio energy of your video — the loudest, most explosive moments are where viral clips hide.</p>
+    <button id="btn-analyze" class="primary">Find Viral Moments</button>
+    <div id="analyze-status" class="status"></div>
+    <div id="moments"></div>
+  </section>
+
+  <section class="card hidden" id="step-export">
+    <h2>3. Captions + vertical clip</h2>
+    <div class="row">
+      <label>Start (sec) <input type="number" id="in-start" min="0" step="0.1" value="0"></label>
+      <label>Length (sec) <input type="number" id="in-dur" min="5" max="120" step="1" value="30"></label>
+    </div>
+    <button id="btn-transcribe">Transcribe Captions (AI, in your browser)</button>
+    <div id="tx-status" class="status"></div>
+    <button id="btn-export" class="primary">Export Vertical Clip (9:16)</button>
+    <div id="export-status" class="status"></div>
+    <progress id="export-progress" max="100" value="0" class="hidden"></progress>
+    <div id="downloads"></div>
+  </section>
+</main>
+
+<footer>
+  <p>Clipper Web runs entirely in your browser — your videos never leave your device.</p>
+  <p>Want YouTube link downloads, live-stream monitoring and face tracking? Get the free desktop app: <a href="https://github.com/Danyalmalik2770/clipper">github.com/Danyalmalik2770/clipper</a></p>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
